@@ -1,20 +1,66 @@
+import { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
+  const [status, setStatus] = useState<'idle' | 'listening'>('idle');
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setStatus(prev => prev === 'idle' ? 'listening' : 'idle');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (status === 'listening') {
+      const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognitionConstructor) {
+        const recognition = new SpeechRecognitionConstructor();
+        
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          console.log('Received transcript:', transcript);
+          // Transition back to idle eventually, but for now we just handle it in background
+        };
+
+        recognition.start();
+
+        // Optional cleanup
+        return () => recognition.stop();
+      }
+    }
+  }, [status]);
+
   return (
     <div className="kiosk-container">
-      <main className="idle-screen">
-        <img src="/cropped-AFIT.png" alt="AFIT Logo" className="school-logo" />
-        <div className="microphone-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-            <line x1="12" x2="12" y1="19" y2="22" />
-          </svg>
-        </div>
-        <h1 className="welcome-message">WELCOME TO AFIT</h1>
-        <p className="prompt-message">PRESS BUTTON TO SPEAK</p>
-      </main>
+      {status === 'idle' ? (
+        <main className="idle-screen">
+          <img src="/cropped-AFIT.png" alt="AFIT Logo" className="school-logo" />
+          <div className="microphone-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" x2="12" y1="19" y2="22" />
+            </svg>
+          </div>
+          <h1 className="welcome-message">WELCOME TO AFIT</h1>
+          <p className="prompt-message">PRESS BUTTON TO SPEAK</p>
+        </main>
+      ) : (
+        <main className="listening-screen">
+          <div className="waveform-container">
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+          </div>
+          <h1 className="listening-text">Listening...</h1>
+        </main>
+      )}
     </div>
   );
 }
