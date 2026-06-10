@@ -22,10 +22,10 @@ A fullscreen, voice-activated React application intended to run on a Raspberry P
 
 ## Implementation Decisions
 
-- **Architecture:** The Kiosk Interface will be integrated into the existing `map-pwa` codebase under a dedicated route (e.g., `/kiosk`) to seamlessly share the `locations.json` data and styling variables, avoiding the overhead of a separate repository.
+- **Architecture:** The Kiosk Interface will be built as an independent, standalone application (e.g., a React app using Vite) rather than being integrated into the existing `map-pwa` codebase. It will maintain its own copy of the `locations.json` data and styling, keeping the two software systems completely separate.
 - **Speech APIs:** The solution relies heavily on the `window.SpeechRecognition` (for voice-to-text) and `window.speechSynthesis` (for voice feedback) APIs.
 - **QR Generation:** The pre-installed `qrcode.react` dependency will be used to render the deep links (e.g., `https://domain.com/?to=[location_id]`).
-- **Hardware Profile:** The UI must be optimized for Chromium `--kiosk` mode on a Raspberry Pi standard non-touch display, prioritizing large typography and high-contrast elements.
+- **Hardware Profile:** The UI must be optimized for Chromium `--kiosk` mode on a Raspberry Pi 720p non-touch display, prioritizing large typography and high-contrast elements.
 - **Hardware Input:** The application will listen for a specific keydown event (e.g., Spacebar or a specific key) that maps to the physical GPIO push button connected to the Raspberry Pi to trigger the "wake and speak" functionality.
 
 ## Testing Decisions
