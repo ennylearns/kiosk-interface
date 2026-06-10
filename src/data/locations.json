@@ -1,0 +1,38 @@
+[
+  {
+    "id": "loc-1",
+    "name": "Main Gate",
+    "category": "Gate",
+    "keywords": ["entrance", "front gate", "main entrance", "gate"],
+    "coordinates": {
+      "lat": 6.5161,
+      "lng": 3.3852
+    },
+    "description": "The main entrance to the university campus.",
+    "imageUrl": "https://placehold.co/600x400"
+  },
+  {
+    "id": "loc-2",
+    "name": "Faculty of Engineering Building",
+    "category": "Building",
+    "keywords": ["engineering", "engineering building", "faculty of engineering"],
+    "coordinates": {
+      "lat": 6.5170,
+      "lng": 3.3860
+    },
+    "description": "Houses all engineering departments and laboratories.",
+    "imageUrl": "https://placehold.co/600x400"
+  },
+  {
+    "id": "loc-3",
+    "name": "University Library",
+    "category": "Building",
+    "keywords": ["library", "central library", "main library", "books"],
+    "coordinates": {
+      "lat": 6.5180,
+      "lng": 3.3875
+    },
+    "description": "The central library serving all students and staff.",
+    "imageUrl": "https://placehold.co/600x400"
+  }
+]
