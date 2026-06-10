@@ -1,0 +1,123 @@
+:root {
+  --bg-color: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --accent-color: #0056b3;
+  --accent-glow: rgba(0, 86, 179, 0.2);
+  
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* No scrollbars for kiosk */
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  
+  /* 720p specific sizing - reduced from 24px */
+  font-size: 18px;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.kiosk-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* subtle radial gradient for premium feel, but very light */
+  background: radial-gradient(circle at center, #ffffff 0%, #f0f4f8 100%);
+}
+
+.school-logo {
+  max-width: 220px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.idle-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2rem;
+  animation: fadeIn 1s ease-out;
+}
+
+.microphone-icon {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: rgba(0, 86, 179, 0.05);
+  border: 4px solid var(--accent-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+  box-shadow: 0 0 20px var(--accent-glow);
+  
+  /* Subtle breathing animation for idle state */
+  animation: pulse 3s infinite ease-in-out;
+}
+
+.microphone-icon svg {
+  width: 45px;
+  height: 45px;
+}
+
+.welcome-message {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.05em;
+  color: #000000;
+  text-transform: uppercase;
+}
+
+.prompt-message {
+  font-size: 1.5rem;
+  color: #000000;
+  margin: 0;
+  font-weight: 700;
+  padding: 0.8rem 2.5rem;
+  border-radius: 100px;
+  background-color: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px var(--accent-glow);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
