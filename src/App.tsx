@@ -102,7 +102,7 @@ function App() {
         <main className="result-screen">
           <h1 className="result-title">Scan to Navigate</h1>
           <div className="qr-container">
-            <QRCodeSVG value={`https://map.afit.edu/?to=${destinationId}`} size={256} bgColor="#ffffff" fgColor="#000000" level="H" />
+            <QRCodeSVG value={`https://map.afit.edu/?to=${destinationId}`} size={256} bgColor="transparent" fgColor="#0c4a6e" level="H" includeMargin={false} />
           </div>
           <p className="result-instruction">Scan this code with your mobile device.</p>
         </main>
