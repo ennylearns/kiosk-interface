@@ -133,7 +133,37 @@ describe('Hardware Activation', () => {
     expect(speakSpy).toHaveBeenCalled();
   });
 
-  it('returns to idle state after voice feedback completes', () => {
+  it('transitions to Result state and displays QR code on valid location match', () => {
+    const MockUtterance = vi.fn().mockImplementation(function(this: any, text: string) {
+      this.text = text;
+    });
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+    
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utt: SpeechSynthesisUtterance) => {
+      if (utt.onend) {
+        utt.onend(new Event('end') as SpeechSynthesisEvent);
+      }
+    });
+
+    render(<App />);
+    
+    act(() => {
+      fireEvent.keyDown(window, { code: 'Space' });
+    });
+
+    act(() => {
+      currentMockRecognition?.simulateResult('where is the library');
+    });
+
+    expect(screen.getByText(/Scan to Navigate/i)).toBeInTheDocument();
+    
+    // Check if SVG is rendered (qrcode.react uses SVG with proper attributes)
+    const qrCode = document.querySelector('svg');
+    expect(qrCode).toBeInTheDocument();
+    // qrcode.react might not have role or title we can easily select by text, so selecting svg is a good proxy.
+  });
+
+  it('returns to idle state on invalid location match after voice feedback completes', () => {
     const MockUtterance = vi.fn().mockImplementation(function(this: any, text: string) {
       this.text = text;
     });
@@ -154,10 +184,44 @@ describe('Hardware Activation', () => {
     expect(screen.getByText(/Listening\.\.\./i)).toBeInTheDocument();
 
     act(() => {
-      currentMockRecognition?.simulateResult('where is the library');
+      currentMockRecognition?.simulateResult('gibberish text');
     });
 
     expect(speakSpy).toHaveBeenCalled();
     expect(screen.getByText(/WELCOME TO AFIT/i)).toBeInTheDocument();
+  });
+
+  it('returns to Idle state from Result state after 30 seconds of inactivity', () => {
+    vi.useFakeTimers();
+    const MockUtterance = vi.fn().mockImplementation(function(this: any, text: string) {
+      this.text = text;
+    });
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+    
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utt: SpeechSynthesisUtterance) => {
+      if (utt.onend) {
+        utt.onend(new Event('end') as SpeechSynthesisEvent);
+      }
+    });
+
+    render(<App />);
+    
+    act(() => {
+      fireEvent.keyDown(window, { code: 'Space' });
+    });
+
+    act(() => {
+      currentMockRecognition?.simulateResult('where is the library');
+    });
+
+    expect(screen.getByText(/Scan to Navigate/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(30000);
+    });
+
+    expect(screen.getByText(/WELCOME TO AFIT/i)).toBeInTheDocument();
+    
+    vi.useRealTimers();
   });
 });

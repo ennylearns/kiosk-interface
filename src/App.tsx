@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import './App.css';
 import { parseLocationQuery } from './lib/locationParser';
 import locations from './data/locations.json';
 
 function App() {
-  const [status, setStatus] = useState<'idle' | 'listening'>('idle');
+  const [status, setStatus] = useState<'idle' | 'listening' | 'result'>('idle');
+  const [destinationId, setDestinationId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -16,6 +18,17 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (status === 'result') {
+      timer = setTimeout(() => {
+        setStatus('idle');
+        setDestinationId(null);
+      }, 30000);
+    }
+    return () => clearTimeout(timer);
+  }, [status]);
 
   useEffect(() => {
     if (status === 'listening') {
@@ -33,11 +46,18 @@ function App() {
             const location = locations.find(loc => loc.id === locationId);
             if (location) {
               utteranceText = `Navigating to ${location.name}`;
+              setDestinationId(locationId);
             }
           }
           
           const utterance = new SpeechSynthesisUtterance(utteranceText);
-          utterance.onend = () => setStatus('idle');
+          utterance.onend = () => {
+            if (locationId) {
+              setStatus('result');
+            } else {
+              setStatus('idle');
+            }
+          };
           window.speechSynthesis.speak(utterance);
         };
 
@@ -51,7 +71,7 @@ function App() {
 
   return (
     <div className="kiosk-container">
-      {status === 'idle' ? (
+      {status === 'idle' && (
         <main className="idle-screen">
           <img src="/cropped-AFIT.png" alt="AFIT Logo" className="school-logo" />
           <div className="microphone-icon">
@@ -64,7 +84,9 @@ function App() {
           <h1 className="welcome-message">WELCOME TO AFIT</h1>
           <p className="prompt-message">PRESS BUTTON TO SPEAK</p>
         </main>
-      ) : (
+      )}
+
+      {status === 'listening' && (
         <main className="listening-screen">
           <div className="waveform-container">
             <div className="bar"></div>
@@ -73,6 +95,16 @@ function App() {
             <div className="bar"></div>
           </div>
           <h1 className="listening-text">Listening...</h1>
+        </main>
+      )}
+
+      {status === 'result' && (
+        <main className="result-screen">
+          <h1 className="result-title">Scan to Navigate</h1>
+          <div className="qr-container">
+            <QRCodeSVG value={`https://map.afit.edu/?to=${destinationId}`} size={256} bgColor="#ffffff" fgColor="#000000" level="H" />
+          </div>
+          <p className="result-instruction">Scan this code with your mobile device.</p>
         </main>
       )}
     </div>
