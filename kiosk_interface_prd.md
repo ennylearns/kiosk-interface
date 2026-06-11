@@ -6,7 +6,7 @@ Traditional campus navigation systems (like mobile guide robots) are expensive a
 
 ## Solution
 
-A fullscreen, voice-activated React application intended to run on a Raspberry Pi via Chromium in `--kiosk` mode. The interface will idle until activated by a physical push button. It will utilize the Web Speech API to listen to user queries, parse the destination against a local `locations.json` database, and use `qrcode.react` to display a high-contrast QR code. Scanning this QR code will deep-link the user to the mobile PWA with their destination pre-selected for turn-by-turn routing.
+A fullscreen, voice-activated React application intended to run on a Kickpi K2B via Chromium in `--kiosk` mode. The interface will idle until activated by a physical push button. It will utilize the Web Speech API to listen to user queries, parse the destination against a local `locations.json` database, and use `qrcode.react` to display a high-contrast QR code. Scanning this QR code will deep-link the user to the mobile PWA with their destination pre-selected for turn-by-turn routing.
 
 ## User Stories
 
@@ -25,8 +25,8 @@ A fullscreen, voice-activated React application intended to run on a Raspberry P
 - **Architecture:** The Kiosk Interface will be built as an independent, standalone application (e.g., a React app using Vite) rather than being integrated into the existing `map-pwa` codebase. It will maintain its own copy of the `locations.json` data and styling, keeping the two software systems completely separate.
 - **Speech APIs:** The solution relies heavily on the `window.SpeechRecognition` (for voice-to-text) and `window.speechSynthesis` (for voice feedback) APIs.
 - **QR Generation:** The pre-installed `qrcode.react` dependency will be used to render the deep links (e.g., `https://domain.com/?to=[location_id]`).
-- **Hardware Profile:** The UI must be optimized for Chromium `--kiosk` mode on a Raspberry Pi 720p non-touch display, prioritizing large typography and high-contrast elements.
-- **Hardware Input:** The application will listen for a specific keydown event (e.g., Spacebar or a specific key) that maps to the physical GPIO push button connected to the Raspberry Pi to trigger the "wake and speak" functionality.
+- **Hardware Profile:** The UI must be optimized for Chromium `--kiosk` mode on a Kickpi K@B 720p non-touch display, prioritizing large typography and high-contrast elements.
+- **Hardware Input:** The application will listen for a specific keydown event (e.g., Spacebar or a specific key) that maps to the physical GPIO push button connected to the Kickpi K@B to trigger the "wake and speak" functionality.
 
 ## Testing Decisions
 
@@ -48,4 +48,4 @@ To ensure the kiosk behaves reliably on physical hardware, we will focus on the 
 ## Further Notes
 
 - The reliability of the Web Speech API requires an active internet connection. Since there is no touch interface, handling offline states gracefully with clear instructions to the user is critical.
-- Micro-animations (e.g., the pulsing idle microphone and the listening waveform) should be implemented using lightweight CSS to ensure smooth performance on the Raspberry Pi.
+- Micro-animations (e.g., the pulsing idle microphone and the listening waveform) should be implemented using lightweight CSS to ensure smooth performance on the Kickpi K@B.
