@@ -20,6 +20,8 @@ describe('Idle Screen', () => {
 describe('Hardware Activation', () => {
   beforeEach(() => {
     setupSpeechMock();
+    vi.stubGlobal('speechSynthesis', { speak: vi.fn() });
+    vi.stubGlobal('SpeechSynthesisUtterance', vi.fn());
   });
 
   afterEach(() => {
@@ -91,5 +93,71 @@ describe('Hardware Activation', () => {
 
     expect(screen.getByText(/WELCOME TO AFIT/i)).toBeInTheDocument();
     expect(currentMockRecognition?.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it('verbally confirms destination when a valid transcript is matched', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak');
+    const MockUtterance = vi.fn();
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+
+    render(<App />);
+    
+    act(() => {
+      fireEvent.keyDown(window, { code: 'Space' });
+    });
+
+    act(() => {
+      currentMockRecognition?.simulateResult('where is the library');
+    });
+
+    expect(MockUtterance).toHaveBeenCalledWith('Navigating to University Library');
+    expect(speakSpy).toHaveBeenCalled();
+  });
+
+  it('verbally announces error when an invalid transcript is received', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak');
+    const MockUtterance = vi.fn();
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+
+    render(<App />);
+    
+    act(() => {
+      fireEvent.keyDown(window, { code: 'Space' });
+    });
+
+    act(() => {
+      currentMockRecognition?.simulateResult('gibberish text that matches no location');
+    });
+
+    expect(MockUtterance).toHaveBeenCalledWith("Sorry, I didn't catch that location. Please try again.");
+    expect(speakSpy).toHaveBeenCalled();
+  });
+
+  it('returns to idle state after voice feedback completes', () => {
+    const MockUtterance = vi.fn().mockImplementation(function(this: any, text: string) {
+      this.text = text;
+    });
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+    
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utt: SpeechSynthesisUtterance) => {
+      if (utt.onend) {
+        utt.onend(new Event('end') as SpeechSynthesisEvent);
+      }
+    });
+
+    render(<App />);
+    
+    act(() => {
+      fireEvent.keyDown(window, { code: 'Space' });
+    });
+
+    expect(screen.getByText(/Listening\.\.\./i)).toBeInTheDocument();
+
+    act(() => {
+      currentMockRecognition?.simulateResult('where is the library');
+    });
+
+    expect(speakSpy).toHaveBeenCalled();
+    expect(screen.getByText(/WELCOME TO AFIT/i)).toBeInTheDocument();
   });
 });

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
+import { parseLocationQuery } from './lib/locationParser';
+import locations from './data/locations.json';
 
 function App() {
   const [status, setStatus] = useState<'idle' | 'listening'>('idle');
@@ -24,7 +26,19 @@ function App() {
         recognition.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript;
           console.log('Received transcript:', transcript);
-          // Transition back to idle eventually, but for now we just handle it in background
+          
+          const locationId = parseLocationQuery(transcript);
+          let utteranceText = "Sorry, I didn't catch that location. Please try again.";
+          if (locationId) {
+            const location = locations.find(loc => loc.id === locationId);
+            if (location) {
+              utteranceText = `Navigating to ${location.name}`;
+            }
+          }
+          
+          const utterance = new SpeechSynthesisUtterance(utteranceText);
+          utterance.onend = () => setStatus('idle');
+          window.speechSynthesis.speak(utterance);
         };
 
         recognition.start();
