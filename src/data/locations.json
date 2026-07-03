@@ -1,6 +1,6 @@
 [
   {
-    "id": "loc-1",
+    "id": "main-gate",
     "name": "Main Gate",
     "category": "Gate",
     "keywords": ["entrance", "front gate", "main entrance", "gate"],
@@ -12,7 +12,7 @@
     "imageUrl": "https://placehold.co/600x400"
   },
   {
-    "id": "loc-2",
+    "id": "engineering",
     "name": "Faculty of Engineering Building",
     "category": "Building",
     "keywords": ["engineering", "engineering building", "faculty of engineering"],
@@ -24,7 +24,7 @@
     "imageUrl": "https://placehold.co/600x400"
   },
   {
-    "id": "loc-3",
+    "id": "library",
     "name": "University Library",
     "category": "Building",
     "keywords": ["library", "central library", "main library", "books"],
