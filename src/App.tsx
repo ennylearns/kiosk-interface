@@ -20,46 +20,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    let ws: WebSocket;
-    let reconnectTimeout: ReturnType<typeof setTimeout>;
-
-    const connect = () => {
-      ws = new WebSocket('ws://localhost:8080');
-      
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'BUTTON_PRESSED' && data.button === 'START') {
-            setStatus(prev => prev === 'idle' ? 'listening' : 'idle');
-          }
-        } catch (err) {
-          console.error('Failed to parse WebSocket message:', err);
-        }
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket disconnected. Reconnecting in 3s...');
-        reconnectTimeout = setTimeout(connect, 3000);
-      };
-
-      ws.onerror = (err) => {
-        console.error('WebSocket error:', err);
-        ws.close();
-      };
-    };
-
-    connect();
-
-    return () => {
-      clearTimeout(reconnectTimeout);
-      if (ws) {
-        ws.onclose = null; // Prevent reconnect loop on unmount
-        ws.close();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     if (status === 'result') {
       timer = setTimeout(() => {
