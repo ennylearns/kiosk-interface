@@ -139,7 +139,7 @@ describe('Hardware Activation', () => {
     });
     vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
     
-    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utt: SpeechSynthesisUtterance) => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utt: SpeechSynthesisUtterance) => {
       if (utt.onend) {
         utt.onend(new Event('end') as SpeechSynthesisEvent);
       }
