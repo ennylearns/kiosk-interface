@@ -110,7 +110,7 @@ describe('Hardware Activation', () => {
       currentMockRecognition?.simulateResult('where is the library');
     });
 
-    expect(MockUtterance).toHaveBeenCalledWith('Navigating to University Library');
+    expect(MockUtterance).toHaveBeenCalledWith('Navigating to AFIT Library');
     expect(speakSpy).toHaveBeenCalled();
   });
 

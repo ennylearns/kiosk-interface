@@ -27,47 +27,66 @@ function getLevenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
-function fuzzyMatch(query: string, target: string): boolean {
-  const queryWords = query.split(/\W+/).filter(Boolean);
-  const targetWords = target.split(/\W+/).filter(Boolean);
-
-  // A target matches if all its words fuzzy-match some word in the query
-  for (const tWord of targetWords) {
-    let matchFound = false;
-    for (const qWord of queryWords) {
-      if (tWord.length <= 4) {
-        if (qWord === tWord) matchFound = true;
-      } else if (tWord.length <= 7) {
-        const dist = getLevenshteinDistance(qWord, tWord);
-        if (dist <= 1) matchFound = true;
-      } else {
-        const dist = getLevenshteinDistance(qWord, tWord);
-        if (dist <= 2) matchFound = true;
-      }
-      if (matchFound) break;
-    }
-    if (!matchFound) return false;
+function fuzzyWordMatch(qWord: string, tWord: string): boolean {
+  if (tWord.length <= 4) {
+    return qWord === tWord;
+  } else if (tWord.length <= 7) {
+    return getLevenshteinDistance(qWord, tWord) <= 1;
+  } else {
+    return getLevenshteinDistance(qWord, tWord) <= 2;
   }
-  return true;
 }
 
 export function parseLocationQuery(query: string): string | null {
   if (!query) return null;
   const lowerQuery = query.toLowerCase();
+  const queryWords = lowerQuery.split(/\W+/).filter(Boolean);
+
+  let bestMatchId: string | null = null;
+  let highestScore = 0;
 
   for (const loc of locations) {
-    if (lowerQuery.includes(loc.name.toLowerCase()) || fuzzyMatch(lowerQuery, loc.name.toLowerCase())) {
-      return loc.id;
-    }
-    
+    let locScore = 0;
+
+    const phrases = [loc.name.toLowerCase()];
     if (loc.keywords) {
-      for (const keyword of loc.keywords) {
-        if (lowerQuery.includes(keyword.toLowerCase()) || fuzzyMatch(lowerQuery, keyword.toLowerCase())) {
-          return loc.id;
+      phrases.push(...loc.keywords.map(k => k.toLowerCase()));
+    }
+
+    for (const phrase of phrases) {
+      // Exact substring match gets a very high score
+      if (lowerQuery.includes(phrase)) {
+        const score = phrase.length * 10;
+        if (score > locScore) locScore = score;
+        continue;
+      }
+
+      // Word overlap score
+      const targetWords = phrase.split(/\W+/).filter(Boolean);
+      let matchCount = 0;
+
+      for (const tWord of targetWords) {
+        for (const qWord of queryWords) {
+          if (fuzzyWordMatch(qWord, tWord)) {
+            matchCount++;
+            break;
+          }
         }
       }
+
+      // Only consider it a match if at least half of the target phrase is present
+      // or if there are multiple strong words matched.
+      if (matchCount > 0 && (matchCount >= targetWords.length / 2 || matchCount >= 2)) {
+        const score = (matchCount * 10) - ((targetWords.length - matchCount) * 2);
+        if (score > locScore) locScore = score;
+      }
+    }
+
+    if (locScore > highestScore) {
+      highestScore = locScore;
+      bestMatchId = loc.id;
     }
   }
 
-  return null;
+  return highestScore > 0 ? bestMatchId : null;
 }
