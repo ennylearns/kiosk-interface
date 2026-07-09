@@ -55,19 +55,42 @@ export function parseLocationQuery(query: string): string | null {
   if (!query) return null;
   const lowerQuery = query.toLowerCase();
 
+  let bestMatchId: string | null = null;
+  let highestScore = 0;
+
   for (const loc of locations) {
-    if (lowerQuery.includes(loc.name.toLowerCase()) || fuzzyMatch(lowerQuery, loc.name.toLowerCase())) {
-      return loc.id;
+    let currentMaxScore = 0;
+
+    // Check name
+    if (lowerQuery.includes(loc.name.toLowerCase())) {
+      currentMaxScore = Math.max(currentMaxScore, loc.name.split(/\W+/).filter(Boolean).length * 2);
+    } else if (fuzzyMatch(lowerQuery, loc.name.toLowerCase())) {
+      currentMaxScore = Math.max(currentMaxScore, loc.name.split(/\W+/).filter(Boolean).length);
     }
     
+    // Check keywords
     if (loc.keywords) {
       for (const keyword of loc.keywords) {
-        if (lowerQuery.includes(keyword.toLowerCase()) || fuzzyMatch(lowerQuery, keyword.toLowerCase())) {
-          return loc.id;
+        if (lowerQuery.includes(keyword.toLowerCase())) {
+          currentMaxScore = Math.max(currentMaxScore, keyword.split(/\W+/).filter(Boolean).length * 2);
+        } else if (fuzzyMatch(lowerQuery, keyword.toLowerCase())) {
+          currentMaxScore = Math.max(currentMaxScore, keyword.split(/\W+/).filter(Boolean).length);
         }
       }
     }
+
+    if (currentMaxScore > highestScore) {
+      highestScore = currentMaxScore;
+      bestMatchId = loc.id;
+    }
   }
 
-  return null;
+  if (bestMatchId) {
+    const matchedLoc = locations.find(l => l.id === bestMatchId);
+    console.log(`Fuzzy matching resolved query "${query}" to: ${matchedLoc?.name} (Score: ${highestScore})`);
+  } else {
+    console.log(`Fuzzy matching found no match for query: "${query}"`);
+  }
+
+  return bestMatchId;
 }

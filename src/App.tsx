@@ -6,8 +6,9 @@ import locations from './data/locations.json';
 import { useVoiceWebSocket } from './hooks/useVoiceWebSocket';
 
 function App() {
-  const [status, setStatus] = useState<'idle' | 'listening' | 'result'>('idle');
+  const [status, setStatus] = useState<'idle' | 'listening' | 'confirming' | 'result'>('idle');
   const [destinationId, setDestinationId] = useState<string | null>(null);
+  const [destinationName, setDestinationName] = useState<string | null>(null);
 
   const handleTranscription = useCallback((transcript: string) => {
     console.log('Received transcript from server:', transcript);
@@ -18,20 +19,13 @@ function App() {
     if (locationId) {
       const location = locations.find(loc => loc.id === locationId);
       if (location) {
-        utteranceText = `Navigating to ${location.name}`;
+        setDestinationName(location.name);
         setDestinationId(locationId);
+        setStatus('confirming');
       }
+    } else {
+      setStatus('idle');
     }
-    
-    const utterance = new SpeechSynthesisUtterance(utteranceText);
-    utterance.onend = () => {
-      if (locationId) {
-        setStatus('result');
-      } else {
-        setStatus('idle');
-      }
-    };
-    window.speechSynthesis.speak(utterance);
   }, []);
 
   const { startRecording, stopRecording } = useVoiceWebSocket({
@@ -51,10 +45,15 @@ function App() {
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
-    if (status === 'result') {
+    if (status === 'confirming') {
+      timer = setTimeout(() => {
+        setStatus('result');
+      }, 3000);
+    } else if (status === 'result') {
       timer = setTimeout(() => {
         setStatus('idle');
         setDestinationId(null);
+        setDestinationName(null);
       }, 30000);
     }
     return () => clearTimeout(timer);
@@ -94,6 +93,12 @@ function App() {
             <div className="bar"></div>
           </div>
           <h1 className="listening-text">Listening...</h1>
+        </main>
+      )}
+
+      {status === 'confirming' && (
+        <main className="confirming-screen">
+          <h1 className="result-title">Navigating to <b>{destinationName}</b>...</h1>
         </main>
       )}
 
