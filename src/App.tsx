@@ -1,12 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import './App.css';
 import { parseLocationQuery } from './lib/locationParser';
 import locations from './data/locations.json';
+import { useVoiceWebSocket } from './hooks/useVoiceWebSocket';
 
 function App() {
   const [status, setStatus] = useState<'idle' | 'listening' | 'result'>('idle');
   const [destinationId, setDestinationId] = useState<string | null>(null);
+
+  const handleTranscription = useCallback((transcript: string) => {
+    console.log('Received transcript from server:', transcript);
+    
+    const locationId = parseLocationQuery(transcript);
+    let utteranceText = "Sorry, I didn't catch that location. Please try again.";
+    
+    if (locationId) {
+      const location = locations.find(loc => loc.id === locationId);
+      if (location) {
+        utteranceText = `Navigating to ${location.name}`;
+        setDestinationId(locationId);
+      }
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(utteranceText);
+    utterance.onend = () => {
+      if (locationId) {
+        setStatus('result');
+      } else {
+        setStatus('idle');
+      }
+    };
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const { startRecording, stopRecording } = useVoiceWebSocket({
+    onTranscription: handleTranscription
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -32,42 +62,11 @@ function App() {
 
   useEffect(() => {
     if (status === 'listening') {
-      const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognitionConstructor) {
-        const recognition = new SpeechRecognitionConstructor();
-        
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          console.log('Received transcript:', transcript);
-          
-          const locationId = parseLocationQuery(transcript);
-          let utteranceText = "Sorry, I didn't catch that location. Please try again.";
-          if (locationId) {
-            const location = locations.find(loc => loc.id === locationId);
-            if (location) {
-              utteranceText = `Navigating to ${location.name}`;
-              setDestinationId(locationId);
-            }
-          }
-          
-          const utterance = new SpeechSynthesisUtterance(utteranceText);
-          utterance.onend = () => {
-            if (locationId) {
-              setStatus('result');
-            } else {
-              setStatus('idle');
-            }
-          };
-          window.speechSynthesis.speak(utterance);
-        };
-
-        recognition.start();
-
-        // Optional cleanup
-        return () => recognition.stop();
-      }
+      startRecording();
+    } else {
+      stopRecording();
     }
-  }, [status]);
+  }, [status, startRecording, stopRecording]);
 
   return (
     <div className="kiosk-container">
