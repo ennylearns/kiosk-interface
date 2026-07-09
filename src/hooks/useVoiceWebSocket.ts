@@ -17,7 +17,7 @@ export function useVoiceWebSocket({ onTranscription }: UseVoiceWebSocketProps) {
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
-    const ws = new WebSocket('ws://localhost:8080');
+    const ws = new WebSocket('ws://10.164.16.193:8080');
     
     ws.onopen = () => {
       console.log('Connected to voice WebSocket server');
