@@ -14,7 +14,6 @@ function App() {
     console.log('Received transcript from server:', transcript);
     
     const locationId = parseLocationQuery(transcript);
-    let utteranceText = "Sorry, I didn't catch that location. Please try again.";
     
     if (locationId) {
       const location = locations.find(loc => loc.id === locationId);
