@@ -27,33 +27,47 @@ function getLevenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
-function fuzzyMatch(query: string, target: string): boolean {
-  const queryWords = query.split(/\W+/).filter(Boolean);
-  const targetWords = target.split(/\W+/).filter(Boolean);
+function calculateMatchScore(query: string, target: string): number {
+  const queryWords = query.toLowerCase().split(/\W+/).filter(Boolean);
+  const targetWords = target.toLowerCase().split(/\W+/).filter(Boolean);
+  
+  if (queryWords.length === 0 || targetWords.length === 0) return 0;
 
-  // A target matches if all its words fuzzy-match some word in the query
+  let score = 0;
+
+  // Exact substring match bonus
+  if (query.toLowerCase().includes(target.toLowerCase())) {
+    score += targetWords.length * 5; 
+  } else if (target.toLowerCase().includes(query.toLowerCase())) {
+    // If target includes query, that's also very good
+    score += queryWords.length * 3;
+  }
+
+  // Word-by-word matching
   for (const tWord of targetWords) {
-    let matchFound = false;
+    let bestWordScore = 0;
     for (const qWord of queryWords) {
-      if (tWord.length <= 4) {
-        if (qWord === tWord) matchFound = true;
-      } else if (tWord.length <= 7) {
-        const dist = getLevenshteinDistance(qWord, tWord);
-        if (dist <= 1) matchFound = true;
+      if (qWord === tWord) {
+        bestWordScore = Math.max(bestWordScore, 2);
       } else {
         const dist = getLevenshteinDistance(qWord, tWord);
-        if (dist <= 2) matchFound = true;
+        if (tWord.length <= 4 && dist === 0) {
+           // Short words must match exactly
+        } else if (tWord.length > 4 && tWord.length <= 7 && dist <= 1) {
+          bestWordScore = Math.max(bestWordScore, 1);
+        } else if (tWord.length > 7 && dist <= 2) {
+          bestWordScore = Math.max(bestWordScore, 1);
+        }
       }
-      if (matchFound) break;
     }
-    if (!matchFound) return false;
+    score += bestWordScore;
   }
-  return true;
+  
+  return score;
 }
 
 export function parseLocationQuery(query: string): string | null {
   if (!query) return null;
-  const lowerQuery = query.toLowerCase();
 
   let bestMatchId: string | null = null;
   let highestScore = 0;
@@ -62,20 +76,12 @@ export function parseLocationQuery(query: string): string | null {
     let currentMaxScore = 0;
 
     // Check name
-    if (lowerQuery.includes(loc.name.toLowerCase())) {
-      currentMaxScore = Math.max(currentMaxScore, loc.name.split(/\W+/).filter(Boolean).length * 2);
-    } else if (fuzzyMatch(lowerQuery, loc.name.toLowerCase())) {
-      currentMaxScore = Math.max(currentMaxScore, loc.name.split(/\W+/).filter(Boolean).length);
-    }
+    currentMaxScore = Math.max(currentMaxScore, calculateMatchScore(query, loc.name));
     
     // Check keywords
     if (loc.keywords) {
       for (const keyword of loc.keywords) {
-        if (lowerQuery.includes(keyword.toLowerCase())) {
-          currentMaxScore = Math.max(currentMaxScore, keyword.split(/\W+/).filter(Boolean).length * 2);
-        } else if (fuzzyMatch(lowerQuery, keyword.toLowerCase())) {
-          currentMaxScore = Math.max(currentMaxScore, keyword.split(/\W+/).filter(Boolean).length);
-        }
+        currentMaxScore = Math.max(currentMaxScore, calculateMatchScore(query, keyword));
       }
     }
 
@@ -85,12 +91,15 @@ export function parseLocationQuery(query: string): string | null {
     }
   }
 
-  if (bestMatchId) {
+  // Define a minimum threshold for a match to avoid random hits
+  // A threshold of 2 means at least one word matched exactly, or two long words had typos, 
+  // or it was a substring match.
+  if (bestMatchId && highestScore >= 2) {
     const matchedLoc = locations.find(l => l.id === bestMatchId);
     console.log(`Fuzzy matching resolved query "${query}" to: ${matchedLoc?.name} (Score: ${highestScore})`);
+    return bestMatchId;
   } else {
-    console.log(`Fuzzy matching found no match for query: "${query}"`);
+    console.log(`Fuzzy matching found no match for query: "${query}" (Highest Score: ${highestScore})`);
+    return null;
   }
-
-  return bestMatchId;
 }
